@@ -55,9 +55,13 @@ einen Fork.
      eh nur für dieses eine Produkt ist.
 7. **Board-Zugriff:** Voten offen für alle (kein Login), Kommentieren/Posten
    hinter Login (Abwägung siehe Projekt-Gedächtnis `meshfield-ops-stack`).
-8. **Backup einrichten** (noch nicht als Vorlage vorhanden — offener Punkt,
-   siehe Projekt-Gedächtnis): Postgres-Dump → B2, analog zu den anderen
-   Meshfield-Backups.
+8. **Backup:** läuft automatisch mit (Service `postgres-backup` im Compose,
+   `eeshugerman/postgres-backup-s3`, nightly `pg_dump` → B2 — kein rohes
+   Volume-Tar, siehe Stolperstein-Abschnitt). Braucht nur einen eigenen,
+   auf `meshfield-backups` beschränkten B2-Application-Key mit Prefix
+   `<produkt>/` (Backblaze → Application Keys → Add a New Application Key,
+   Bucket `meshfield-backups`, File name prefix `<produkt>/`) und die
+   `PG_BACKUP_S3_*`-Variablen aus `.env.prod.example`.
 
 ## Bekannte Stolpersteine (bereits gelöst, hier dokumentiert)
 
@@ -77,6 +81,11 @@ einen Fork.
 - **Magic-Link-Login funktioniert nur mit konfiguriertem SMTP** (Brevo o.ä.
   — `EMAIL_SMTP_*`-Variablen, aktuell bei keiner Instanz gesetzt). Bis dahin
   nur Passwort-Login nutzen, keine Magic-Link-Flows testen.
+- **Raw-Volume-Backup des Postgres-Datenverzeichnisses ist laut Coolify-Doku
+  potenziell inkonsistent**, wenn es während des Betriebs gezogen wird
+  ("Use the database engine's supported backup workflow for database
+  data"). Deshalb kein Coolify-"Storage backup" auf den `postgres-data`-
+  Volume, sondern der `postgres-backup`-Service mit echtem `pg_dump`.
 
 ## Verwandt
 
