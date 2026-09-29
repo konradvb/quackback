@@ -20,7 +20,12 @@ services:
     # Carries BASE_URL, SECRET_KEY, email settings, S3_* (B2), etc.
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:?set POSTGRES_USER in .env}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-quackback}
+      # POSTGRES_PASSWORD_URLENC must be the percent-encoded form of
+      # POSTGRES_PASSWORD (e.g. '/' -> '%2F') — Compose does not URL-encode
+      # values, and an unencoded special character here breaks the app's own
+      # URL parser at startup even though Postgres itself accepts the raw
+      # password fine.
+      DATABASE_URL: postgresql://${POSTGRES_USER:?set POSTGRES_USER in .env}:${POSTGRES_PASSWORD_URLENC:?set POSTGRES_PASSWORD_URLENC in .env}@postgres:5432/${POSTGRES_DB:-quackback}
       REDIS_URL: redis://dragonfly:6379
       S3_ENDPOINT: ${S3_ENDPOINT:?set S3_ENDPOINT in .env}
       S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET in .env}
