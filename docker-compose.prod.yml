@@ -82,7 +82,10 @@ services:
   # volume (a raw tar of a running Postgres data dir is not crash-consistent —
   # this uses pg_dump instead, per Coolify's own backup guidance).
   postgres-backup:
-    image: eeshugerman/postgres-backup-s3:latest
+    # eeshugerman/postgres-backup-s3 is archived and tops out at Postgres 16;
+    # our postgres image is 18 (docker/postgres/Dockerfile), so use the
+    # maintained fork that ships a matching pg_dump.
+    image: ardakilic/postgres-backup-s3:18
     container_name: quackback-postgres-backup
     restart: unless-stopped
     depends_on:
