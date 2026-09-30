@@ -32,7 +32,11 @@ export const Route = createFileRoute('/api/auth/portal-signin')({
         const callbackURL = typeof body.callbackURL === 'string' ? body.callbackURL : '/'
 
         try {
-          await requestEmailSignin({ email: body.email, callbackURL })
+          await requestEmailSignin({
+            email: body.email,
+            callbackURL,
+            acceptLanguage: request.headers.get('accept-language'),
+          })
           return Response.json({ ok: true })
         } catch (err) {
           log.error({ err }, 'portal signin failed')

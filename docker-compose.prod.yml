@@ -8,12 +8,20 @@
 # provider already used for Meshfield's backups (separate bucket + dedicated,
 # bucket-scoped application key — not the shared backup credentials).
 #
+# The app service builds from source (apps/web/Dockerfile) instead of pulling
+# the upstream prebuilt image — needed so Meshfield-side app-code changes
+# (e.g. the German magic-link email translation) actually reach the running
+# container. QUACKBACK_TAG is no longer consumed here; kept in .env only as a
+# record of which upstream release this fork was last rebased onto.
+#
 # Everything else is unchanged from upstream docker-compose.prod.yml (v0.13.2).
 # ============================================================================
 
 services:
   app:
-    image: ghcr.io/quackbackio/quackback:${QUACKBACK_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
     container_name: quackback-app
     restart: unless-stopped
     init: true

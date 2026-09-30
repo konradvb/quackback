@@ -13,7 +13,7 @@ import type { Transporter } from 'nodemailer'
 import { Resend } from 'resend'
 import { createLogger } from '@quackback/logger'
 import { isSyntheticAnonEmail } from './anon'
-import { MagicLinkEmail } from './templates/magic-link'
+import { MagicLinkEmail, type MagicLinkLocale } from './templates/magic-link'
 import { InvitationEmail } from './templates/invitation'
 import { PortalInviteEmail } from './templates/portal-invite'
 import { WelcomeEmail } from './templates/welcome'
@@ -305,14 +305,20 @@ interface SendMagicLinkParams {
   signInUrl: string
   code: string
   logoUrl?: string
+  locale?: MagicLinkLocale
+}
+
+const magicLinkSubjects: Record<MagicLinkLocale, string> = {
+  en: 'Your Quackback sign-in link',
+  de: 'Dein Quackback-Anmeldelink',
 }
 
 export async function sendMagicLinkEmail(params: SendMagicLinkParams): Promise<EmailResult> {
-  const { to, signInUrl, code, logoUrl } = params
+  const { to, signInUrl, code, logoUrl, locale = 'en' } = params
 
   if (getProvider() === 'console') {
     log.debug(
-      { email_type: 'MagicLinkEmail', to, signInUrl, code },
+      { email_type: 'MagicLinkEmail', to, signInUrl, code, locale },
       '[dev] email preview (console provider)'
     )
     return { sent: false }
@@ -321,8 +327,8 @@ export async function sendMagicLinkEmail(params: SendMagicLinkParams): Promise<E
   log.debug('sending sign-in email')
   return sendEmail({
     to,
-    subject: 'Your Quackback sign-in link',
-    react: MagicLinkEmail({ signInUrl, code, logoUrl }),
+    subject: magicLinkSubjects[locale] ?? magicLinkSubjects.en,
+    react: MagicLinkEmail({ signInUrl, code, logoUrl, locale }),
   })
 }
 

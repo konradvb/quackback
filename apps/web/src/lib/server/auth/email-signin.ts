@@ -15,6 +15,8 @@ export async function requestEmailSignin(opts: {
   email: string
   /** Path the user lands on after a successful magic-link click. */
   callbackURL: string
+  /** Raw Accept-Language header from the sign-in request, if available. */
+  acceptLanguage?: string | null
 }): Promise<void> {
   const auth = await getAuth()
   const headers = new Headers({
@@ -25,6 +27,13 @@ export async function requestEmailSignin(opts: {
   const { db } = await import('@/lib/server/db')
   const { isEmailConfigured, sendMagicLinkEmail } = await import('@quackback/email')
   const { getEmailSafeUrl } = await import('@/lib/server/storage/s3')
+  const { resolveLocale } = await import('@/lib/shared/i18n')
+
+  // Only English and German have a translated magic-link email (see
+  // packages/email/src/templates/magic-link.tsx); anything else the portal
+  // itself supports still falls back to English for this one template.
+  const resolved = resolveLocale(opts.acceptLanguage)
+  const locale = resolved === 'de' ? 'de' : 'en'
 
   // Failed verifies (token consumed by an email scanner, expired, etc.)
   // need to land on the right login page. Admin callbacks (`/admin/...`)
@@ -64,5 +73,6 @@ export async function requestEmailSignin(opts: {
     signInUrl,
     code: otp,
     logoUrl: getEmailSafeUrl(settings?.logoKey) ?? undefined,
+    locale,
   })
 }
