@@ -305,16 +305,17 @@ interface SendMagicLinkParams {
   signInUrl: string
   code: string
   logoUrl?: string
+  workspaceName?: string
   locale?: MagicLinkLocale
 }
 
-const magicLinkSubjects: Record<MagicLinkLocale, string> = {
-  en: 'Your Quackback sign-in link',
-  de: 'Dein Quackback-Anmeldelink',
+const magicLinkSubjects: Record<MagicLinkLocale, (name?: string) => string> = {
+  en: (name) => (name ? `Your ${name} sign-in link` : 'Your sign-in link'),
+  de: (name) => (name ? `Dein ${name}-Anmeldelink` : 'Dein Anmeldelink'),
 }
 
 export async function sendMagicLinkEmail(params: SendMagicLinkParams): Promise<EmailResult> {
-  const { to, signInUrl, code, logoUrl, locale = 'en' } = params
+  const { to, signInUrl, code, logoUrl, workspaceName, locale = 'en' } = params
 
   if (getProvider() === 'console') {
     log.debug(
@@ -327,8 +328,8 @@ export async function sendMagicLinkEmail(params: SendMagicLinkParams): Promise<E
   log.debug('sending sign-in email')
   return sendEmail({
     to,
-    subject: magicLinkSubjects[locale] ?? magicLinkSubjects.en,
-    react: MagicLinkEmail({ signInUrl, code, logoUrl, locale }),
+    subject: (magicLinkSubjects[locale] ?? magicLinkSubjects.en)(workspaceName),
+    react: MagicLinkEmail({ signInUrl, code, logoUrl, workspaceName, locale }),
   })
 }
 

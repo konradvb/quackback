@@ -28,6 +28,7 @@ export async function requestEmailSignin(opts: {
   const { isEmailConfigured, sendMagicLinkEmail } = await import('@quackback/email')
   const { getEmailSafeUrl } = await import('@/lib/server/storage/s3')
   const { resolveLocale } = await import('@/lib/shared/i18n')
+  const { getTenantSettings } = await import('@/lib/server/domains/settings/settings.service')
 
   // Only English and German have a translated magic-link email (see
   // packages/email/src/templates/magic-link.tsx); anything else the portal
@@ -46,7 +47,7 @@ export async function requestEmailSignin(opts: {
     ? '/auth/login?callbackUrl=/admin'
     : '/auth/login'
 
-  const [{ url: signInUrl }, , settings] = await Promise.all([
+  const [{ url: signInUrl }, , settings, tenant] = await Promise.all([
     mintMagicLinkUrl({
       email: opts.email,
       callbackPath: opts.callbackURL,
@@ -58,6 +59,7 @@ export async function requestEmailSignin(opts: {
       headers,
     }),
     db.query.settings.findFirst({ columns: { logoKey: true } }),
+    getTenantSettings(),
   ])
 
   const otp = getOTP(opts.email)
@@ -73,6 +75,7 @@ export async function requestEmailSignin(opts: {
     signInUrl,
     code: otp,
     logoUrl: getEmailSafeUrl(settings?.logoKey) ?? undefined,
+    workspaceName: tenant?.name,
     locale,
   })
 }
